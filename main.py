@@ -36,38 +36,34 @@ async def describe_upload(file: UploadFile = File(...)):
     contents = await file.read()
 
 @app.post("/generate-outfit/")
-async def generate_outfit(request: Request, prompt: str = Form(...)):
-    try:
-        form = await request.form()
-        raw_urls = form.getlist("urls")
+async def generate_outfit(
+    prompt: str = Form(...),
+    urls: List[str] = Form(...)
+):
+    labeled_items = []
 
-        labeled_items = []
+    for raw in urls:
+        if ": " in raw:
+            label, url = raw.split(": ", 1)
+        else:
+            label, url = "Item", raw  
 
-        for raw in raw_urls:
-            if ": " in raw:
-                label, url = raw.split(": ", 1)
-            else:
-                label, url = "Item", raw  
+        title = extract_product_title(url)
+        labeled_items.append(f"{label}: {title}")
 
-            title = extract_product_title(url)
-            labeled_items.append(f"{label}: {title}")
+    combined_items = "\n".join(labeled_items)
 
-        combined_items = "\n".join(labeled_items)
+    full_prompt = (
+        f"{prompt}\n"
+        f"Create an outfit that includes the following items:\n"
+        f"{combined_items}\n"
+        f"Show the full-body outfit on a mannequin. Clean, high-quality background."
+    )
 
-        full_prompt = (
-            f"{prompt}\n"
-            f"Create an outfit that includes the following items:\n"
-            f"{combined_items}\n"
-            f"Show the full-body outfit on a mannequin. Clean, high-quality background."
-        )
-
-        response = openai.Image.create(
-            prompt=full_prompt,
-            n=1,
-            size="512x512"
-        )
-        image_url = response["data"][0]["url"]
-        return {"image_url": image_url}
-
-    except Exception as e:
-        return {"error": str(e)}
+    response = openai.Image.create(
+        prompt=full_prompt,
+        n=1,
+        size="512x512"
+    )
+    image_url = response["data"][0]["url"]
+    return {"image_url": image_url}
