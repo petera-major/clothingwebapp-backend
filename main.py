@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from fastapi import File, UploadFile
 from typing import List
+from openai import OpenAI
 import requests
-import openai
 import os
+
+client = OpenAI()
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -60,10 +62,14 @@ async def generate_outfit(
         f"Show the full-body outfit on a mannequin. Clean, high-quality background."
     )
 
-    response = openai.Image.create(
+    response = client.images.generate(
+        model="dall-e-3",
         prompt=full_prompt,
-        n=1,
-        size="512x512"
+        size="1024x1024",
+        quality="standard",
+        n=1
     )
-    image_url = response["data"][0]["url"]
+
+    image_url = response.data[0].url
     return {"image_url": image_url}
+
