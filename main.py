@@ -8,8 +8,6 @@ from openai import OpenAI
 import requests
 import os
 
-client = OpenAI()
-
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
 
