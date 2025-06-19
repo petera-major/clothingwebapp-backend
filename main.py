@@ -41,8 +41,8 @@ async def describe_image(file: UploadFile):
         )
         return response.choices[0].message["content"]
     except Exception as e:
-        print(f"Vision API failed: {e}")
-        return "an item of clothing"
+        print("Vision API failed:", e)
+        return "a fashion item"
 
 @app.post("/generate-outfit/")
 async def generate_outfit(
@@ -54,26 +54,25 @@ async def generate_outfit(
         labeled_items = []
 
         for file, tag in zip(files, tags):
-            desc = await describe_image(file)
-            labeled_items.append(f"{tag}: {desc}")
+            description = await describe_image(file)
+            labeled_items.append(f"{tag}: {description}")
 
-        combined_items = "\n".join(labeled_items)
         full_prompt = (
             f"{prompt}\n"
-            f"Create an outfit using these items:\n"
-            f"{combined_items}\n"
-            f"Show it styled on a model. High-quality fashion photo."
+            f"Create an outfit using:\n" +
+            "\n".join(labeled_items) +
+            "\nShow the outfit styled on a mannequin in high-quality lighting."
         )
 
-        image_resp = openai.Image.create(
+        response = openai.Image.create(
             prompt=full_prompt,
             n=1,
             size="1024x1024"
         )
 
-        image_url = image_resp["data"][0]["url"]
+        image_url = response["data"][0]["url"]
         return {"image_url": image_url}
 
     except Exception as e:
-        print(f"Outfit generation failed: {e}")
+        print("Outfit generation failed:", e)
         return {"error": "Something went wrong while generating the outfit."}
