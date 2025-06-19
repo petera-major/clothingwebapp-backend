@@ -46,6 +46,15 @@ async def describe_image(file: UploadFile):
         print("Vision API failed:", e)
         return "a fashion item"
 
+@app.get("/ping-openai")
+def ping():
+    try:
+        client.models.list()
+        return {"status": "✅ OpenAI reachable"}
+    except Exception as e:
+        return {"status": "❌ Not reachable", "error": str(e)}
+
+
 @app.post("/generate-outfit/")
 async def generate_outfit(
     prompt: str = Form(...),
