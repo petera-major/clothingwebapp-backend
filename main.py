@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Form
-from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -12,7 +11,7 @@ import os
 client = OpenAI()
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
 
 app = FastAPI()
 
