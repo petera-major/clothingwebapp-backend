@@ -57,10 +57,12 @@ async def generate_outfit(
             desc = await describe_image(file)
             labeled_items.append(f"{tag}: {desc}")
 
+        combined_items = "\n".join(labeled_items)
         full_prompt = (
-            f"{prompt}\nCreate a stylish outfit using:\n" +
-            "\n".join(labeled_items) +
-            "\nShow the outfit on a full-body mannequin. Clean white sleek background."
+            f"{prompt}\n"
+            f"Create an outfit using these items:\n"
+            f"{combined_items}\n"
+            f"Show it styled on a model. High-quality fashion photo."
         )
 
         image_resp = openai.Image.create(
@@ -74,4 +76,4 @@ async def generate_outfit(
 
     except Exception as e:
         print(f"Outfit generation failed: {e}")
-        return {"error": "Could not generate outfit"}
+        return {"error": "Something went wrong while generating the outfit."}
