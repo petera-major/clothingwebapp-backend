@@ -4,18 +4,20 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from fastapi import File, UploadFile
 from typing import List
-import openai
+from openai import OpenAI
 import requests
 import base64
 import os
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# FastAPI setup
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://envisionyurtaste.netlify.app"],  
+    allow_origins=["https://envisionyurtaste.netlify.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,7 +28,7 @@ async def describe_image(file: UploadFile):
     base64_image = base64.b64encode(contents).decode("utf-8")
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-vision-preview",
             messages=[
                 {
@@ -39,7 +41,7 @@ async def describe_image(file: UploadFile):
             ],
             max_tokens=100
         )
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content
     except Exception as e:
         print("Vision API failed:", e)
         return "a fashion item"
@@ -58,19 +60,19 @@ async def generate_outfit(
             labeled_items.append(f"{tag}: {description}")
 
         full_prompt = (
-            f"{prompt}\n"
-            f"Create an outfit using:\n" +
+            f"{prompt}\nCreate an outfit using the following:\n" +
             "\n".join(labeled_items) +
-            "\nShow the outfit styled on a mannequin in high-quality lighting."
+            "\nShow it on a full-body mannequin, clean background, fashion editorial lighting."
         )
 
-        response = openai.Image.create(
+        response = client.images.generate(
+            model="dall-e-2",  
             prompt=full_prompt,
             n=1,
             size="1024x1024"
         )
 
-        image_url = response["data"][0]["url"]
+        image_url = response.data[0].url
         return {"image_url": image_url}
 
     except Exception as e:
