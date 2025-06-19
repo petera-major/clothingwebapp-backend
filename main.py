@@ -37,36 +37,31 @@ async def describe_upload(file: UploadFile = File(...)):
 @app.post("/generate-outfit/")
 async def generate_outfit(
     prompt: str = Form(...),
-    urls: List[str] = Form(...)
+    tags: List[str] = Form(...),
+    files: List[UploadFile] = File(...)
 ):
-    labeled_items = []
+    clothing_descriptions = []
 
-    for raw in urls:
-        if ": " in raw:
-            label, url = raw.split(": ", 1)
-        else:
-            label, url = "Item", raw  
+    for i in range(len(files)):
+        label = tags[i]
+        filename = files[i].filename
+        clothing_descriptions.append(f"{label}: {filename}")
 
-        title = extract_product_title(url)
-        labeled_items.append(f"{label}: {title}")
-
-    combined_items = "\n".join(labeled_items)
-
-    full_prompt = (
+    outfit_prompt = (
         f"{prompt}\n"
-        f"Create an outfit that includes the following items:\n"
-        f"{combined_items}\n"
-        f"Show the full-body outfit on a mannequin. Clean, high-quality background."
+        f"Build an outfit using these uploaded items:\n"
+        f"{', '.join(clothing_descriptions)}\n"
+        f"Show a full-body mannequin wearing the completed look. Neutral background."
     )
 
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=full_prompt,
-        size="1024x1024",
-        quality="standard",
-        n=1
-    )
-
-    image_url = response.data[0].url
-    return {"image_url": image_url}
-
+    try:
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=outfit_prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1
+        )
+        return {"image_url": response.data[0].url}
+    except Exception as e:
+        return {"error": str(e)}
